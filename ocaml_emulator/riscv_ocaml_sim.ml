@@ -45,7 +45,7 @@ let options = Arg.align ([("-dump-dts",
                            Arg.Set P.config_low_addr,
                            " enable low-addr support");    
                           ("-mis-hipriority",
-                           Arg.Set P.config_mis_hipriorityr,
+                           Arg.Set P.config_mis_hipriority,
                            " enable mis-hipriority support");    
                           ("-pmp-count",
                            Arg.Int P.set_config_pmp_count,
