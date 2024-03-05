@@ -9,3 +9,5 @@ _sbuild/
 /z3_problems
 ocaml_emulator/riscv_ocaml_sim_RV32
 ocaml_emulator/riscv_ocaml_sim_RV64
+c_emulator/riscv_sim_RV32
+c_emulator/riscv_sim_RV64
