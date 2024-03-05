@@ -15,6 +15,8 @@ bool rv_enable_vext = true;
 
 bool rv_enable_dirty_update = false;
 bool rv_enable_misaligned = false;
+extern bool rv_low_addr;
+extern bool rv_mis_hipriority;
 bool rv_mtval_has_illegal_inst_bits = false;
 bool rv_enable_writable_fiom = true;
 

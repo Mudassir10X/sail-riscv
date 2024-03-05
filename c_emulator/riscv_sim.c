@@ -121,6 +121,8 @@ char *sailcov_file = NULL;
 static struct option options[] = {
     {"enable-dirty-update",         no_argument,       0, 'd'                     },
     {"enable-misaligned",           no_argument,       0, 'm'                     },
+    {"low-addr",                    no_argument,       0, 'Y'                     }, 
+    {"mis-hipriority",              no_argument,       0, 'Z'                     }, 
     {"pmp-count",                   required_argument, 0, OPT_PMP_COUNT           },
     {"pmp-grain",                   required_argument, 0, OPT_PMP_GRAIN           },
     {"enable-next",                 no_argument,       0, 'N'                     },
@@ -246,6 +248,8 @@ static int process_args(int argc, char **argv)
                     "a"
                     "d"
                     "m"
+	                  "Y"
+                    "Z"   
                     "P"
                     "C"
                     "N"
@@ -286,6 +290,14 @@ static int process_args(int argc, char **argv)
       fprintf(stderr, "enabling misaligned access.\n");
       rv_enable_misaligned = true;
       break;
+    case 'Y':
+      fprintf(stderr, "enabling low-addr support.\n");
+      rv_low_addr = true;
+      break; 
+    case 'Z':
+      fprintf(stderr, "enabling high priority misaligned support.\n");
+      rv_mis_hipriority = true;
+      break;  
     case OPT_PMP_COUNT:
       pmp_count = atol(optarg);
       fprintf(stderr, "PMP count: %lld\n", pmp_count);

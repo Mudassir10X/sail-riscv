@@ -41,6 +41,12 @@ let options = Arg.align ([("-dump-dts",
                           ("-enable-misaligned-access",
                            Arg.Set P.config_enable_misaligned_access,
                            " enable misaligned accesses without M-mode traps");
+                          ("-low-addr",
+                           Arg.Set P.config_low_addr,
+                           " enable low-addr support");    
+                          ("-mis-hipriority",
+                           Arg.Set P.config_mis_hipriorityr,
+                           " enable mis-hipriority support");    
                           ("-pmp-count",
                            Arg.Int P.set_config_pmp_count,
                            " number of supported PMPs (0, 16, 64)");

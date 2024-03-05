@@ -11317,6 +11317,10 @@ Axiom plat_enable_dirty_update : forall  (_ : unit) , bool.
 
 Axiom plat_enable_misaligned_access : forall  (_ : unit) , bool.
 
+Axiom plat_low_addr : forall  (_ : unit) , bool.
+
+Axiom plat_mis_hipriority : forall  (_ : unit) , bool.
+
 Axiom plat_mtval_has_illegal_inst_bits : forall  (_ : unit) , bool.
 
 Axiom plat_rom_base : forall  (_ : unit) , mword 32.

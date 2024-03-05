@@ -44,6 +44,18 @@ val plat_enable_misaligned_access = {ocaml: "Platform.enable_misaligned_access",
                                      c: "plat_enable_misaligned_access",
                                      lem: "plat_enable_misaligned_access"} : unit -> bool
 
+	/* whether the platform Checks for lower address first */
+val plat_low_addr = {ocaml: "Platform.low_addr",
+                       interpreter: "Platform.low_addr",
+                       c: "plat_low_addr",
+                       lem: "plat_low_addr"} : unit -> bool
+
+/* whether the platform handles misaligned exception at highest priority */
+val plat_mis_hipriority = {ocaml: "Platform.mis_hipriority",
+                       interpreter: "Platform.mis_hipriority",
+                       c: "plat_mis_hipriority",
+                       lem: "plat_mis_hipriority"} : unit -> bool
+
 /* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
 val plat_mtval_has_illegal_inst_bits = {ocaml: "Platform.mtval_has_illegal_inst_bits",
                                         interpreter: "Platform.mtval_has_illegal_inst_bits",

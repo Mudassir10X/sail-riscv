@@ -330,7 +330,37 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
+      then { 
+        if ( plat_mis_hipriority()) then {
+            handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL
+        } 
+        else{
+          if (plat_low_addr()) then {
+            vaddr_L: xlenbits = ((vaddr >> 2) << 2);
+            match translateAddr(vaddr_L, Read(Data)) {
+              TR_Failure(e, _) => { handle_mem_exception(vaddr_L, e); RETIRE_FAIL },
+              TR_Address(paddr, _) =>{
+                match pmpCheck(paddr,8,Read(Data),effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
+                  None()  => {handle_mem_exception(vaddr_L, E_Load_Addr_Align()); RETIRE_FAIL},
+                  Some(e) => {handle_mem_exception(vaddr_L, e); RETIRE_FAIL}
+                }
+              }
+            }
+          }
+          else {
+            vaddr_H: xlenbits = (((vaddr >> 2) + 1) << 2);
+            match translateAddr(vaddr_H, Read(Data)) {
+              TR_Failure(e, _) => { handle_mem_exception(vaddr_H, e); RETIRE_FAIL },
+              TR_Address(paddr, _) =>{
+                match pmpCheck(paddr,8,Read(Data),effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
+                  None()  => {handle_mem_exception(vaddr_H, E_Load_Addr_Align()); RETIRE_FAIL},
+                  Some(e) => {handle_mem_exception(vaddr_H, e); RETIRE_FAIL}
+                }
+              }
+            }
+          }
+        }
+      }
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) =>
@@ -386,7 +416,37 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
       if   check_misaligned(vaddr, width)
-      then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
+      then {
+        if ( plat_mis_hipriority()) then {
+            handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL
+        } 
+        else{
+          if (plat_low_addr()) then {
+            vaddr_L: xlenbits = ((vaddr >> 2) << 2);
+            match translateAddr(vaddr_L, Write(Data)) {
+              TR_Failure(e, _) => { handle_mem_exception(vaddr_L, e); RETIRE_FAIL },
+              TR_Address(paddr, _) =>{
+                match pmpCheck(paddr,8,Write(Data),effectivePrivilege(Write(Data), mstatus, cur_privilege)) {
+                  None()  => {handle_mem_exception(vaddr_L, E_SAMO_Addr_Align()); RETIRE_FAIL},
+                  Some(e) => {handle_mem_exception(vaddr_L, e); RETIRE_FAIL}
+                }
+              }
+            }
+          }
+          else {
+            vaddr_H: xlenbits = (((vaddr >> 2) + 1) << 2);
+            match translateAddr(vaddr_H, Write(Data)) {
+              TR_Failure(e, _) => { handle_mem_exception(vaddr_H, e); RETIRE_FAIL },
+              TR_Address(paddr, _) =>{
+                match pmpCheck(paddr,8,Write(Data),effectivePrivilege(Write(Data), mstatus, cur_privilege)) {
+                  None()  => {handle_mem_exception(vaddr_H, E_SAMO_Addr_Align()); RETIRE_FAIL},
+                  Some(e) => {handle_mem_exception(vaddr_H, e); RETIRE_FAIL}
+                }
+              }
+            }
+          }
+        }
+      }
       else match translateAddr(vaddr, Write(Data)) {
         TR_Failure(e, _)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) => {

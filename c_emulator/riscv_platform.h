@@ -14,6 +14,8 @@ uint64_t sys_pmp_grain(unit);
 
 bool plat_enable_dirty_update(unit);
 bool plat_enable_misaligned_access(unit);
+bool plat_low_addr(unit);
+bool plat_mis_hipriority(unit);
 bool plat_mtval_has_illegal_inst_bits(unit);
 
 mach_bits plat_ram_base(unit);
