@@ -306,11 +306,36 @@ function extend_value(is_unsigned, value) = match (value) {
   MemException(e) => MemException(e)
 }
 
-val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, MemoryOpResult(bits(8 * 'n)), bool) -> Retired
-function process_load(rd, vaddr, value, is_unsigned) =
+val process_load : forall 'n, 0 < 'n <= xlen_bytes. (regidx, xlenbits, atom('n), MemoryOpResult(bits(8 * 'n)), bool) -> Retired
+function process_load(rd, vaddr, width, value, is_unsigned) =
   match extend_value(is_unsigned, value) {
     MemValue(result) => { X(rd) = result; RETIRE_SUCCESS },
-    MemException(e)  => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+    MemException(e)  => { 
+      let eaddr : xlenbits = {
+        if plat_low_addr() then {
+          match pmpCheck(((vaddr >> 2) << 2), width, Read(Data), effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
+            None()  => {
+              match pmpCheck((((vaddr >> 2) + 1) << 2), width, Read(Data), effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
+                None() => ((vaddr >> 2) << 2),
+                Some(e) => (((vaddr >> 2) + 1) << 2)
+              }
+            },
+            Some(e) => ((vaddr >> 2) << 2)
+          }
+        }
+        else {
+          match pmpCheck((((vaddr >> 2) + 1) << 2), width, Read(Data), effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
+            None()  => {
+              match pmpCheck(((vaddr >> 2) << 2), width, Read(Data), effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
+                None() => ((vaddr >> 2) << 2),
+                Some(e) => ((vaddr >> 2) << 2)
+              }
+            },
+            Some(e) => (((vaddr >> 2) + 1) << 2)
+          }
+        }
+      };
+      handle_mem_exception(eaddr, e); RETIRE_FAIL }
   }
 
 function check_misaligned(vaddr : xlenbits, width : word_width) -> bool =
@@ -329,56 +354,25 @@ function clause execute(LOAD(imm, rs1, rd, is_unsigned, width, aq, rl)) = {
   match ext_data_get_addr(rs1, offset, Read(Data), width) {
     Ext_DataAddr_Error(e)  => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) =>
-      if   check_misaligned(vaddr, width)
-      then { 
-        if ( plat_mis_hipriority()) then {
-            handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL
-        } 
-        else{
-          if (plat_low_addr()) then {
-            vaddr_L: xlenbits = ((vaddr >> 2) << 2);
-            match translateAddr(vaddr_L, Read(Data)) {
-              TR_Failure(e, _) => { handle_mem_exception(vaddr_L, e); RETIRE_FAIL },
-              TR_Address(paddr, _) =>{
-                match pmpCheck(paddr,8,Read(Data),effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
-                  None()  => {handle_mem_exception(vaddr_L, E_Load_Addr_Align()); RETIRE_FAIL},
-                  Some(e) => {handle_mem_exception(vaddr_L, e); RETIRE_FAIL}
-                }
-              }
-            }
-          }
-          else {
-            vaddr_H: xlenbits = (((vaddr >> 2) + 1) << 2);
-            match translateAddr(vaddr_H, Read(Data)) {
-              TR_Failure(e, _) => { handle_mem_exception(vaddr_H, e); RETIRE_FAIL },
-              TR_Address(paddr, _) =>{
-                match pmpCheck(paddr,8,Read(Data),effectivePrivilege(Read(Data), mstatus, cur_privilege)) {
-                  None()  => {handle_mem_exception(vaddr_H, E_Load_Addr_Align()); RETIRE_FAIL},
-                  Some(e) => {handle_mem_exception(vaddr_H, e); RETIRE_FAIL}
-                }
-              }
-            }
-          }
-        }
-      }
+      if   (check_misaligned(vaddr, width) & plat_mis_hipriority())
+      then { handle_mem_exception(((vaddr >> 2) << 2), E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, _) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, _) =>
           match (width) {
             BYTE =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr, 1, mem_read(Read(Data), paddr, 1, aq, rl, false), is_unsigned),
             HALF =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr, 2, mem_read(Read(Data), paddr, 2, aq, rl, false), is_unsigned),
             WORD =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr, 4, mem_read(Read(Data), paddr, 4, aq, rl, false), is_unsigned),
             DOUBLE if sizeof(xlen) >= 64 =>
-              process_load(rd, vaddr, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
+              process_load(rd, vaddr, 8, mem_read(Read(Data), paddr, 8, aq, rl, false), is_unsigned),
             _ => report_invalid_width(__FILE__, __LINE__, width, "load")
           }
       }
   }
 }
-
 val maybe_aq : bool <-> string
 mapping maybe_aq = {
   true  <-> ".aq",
@@ -426,7 +420,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
             match translateAddr(vaddr_L, Write(Data)) {
               TR_Failure(e, _) => { handle_mem_exception(vaddr_L, e); RETIRE_FAIL },
               TR_Address(paddr, _) =>{
-                match pmpCheck(paddr,8,Write(Data),effectivePrivilege(Write(Data), mstatus, cur_privilege)) {
+                match pmpCheck(paddr,4,Write(Data),effectivePrivilege(Write(Data), mstatus, cur_privilege)) {
                   None()  => {handle_mem_exception(vaddr_L, E_SAMO_Addr_Align()); RETIRE_FAIL},
                   Some(e) => {handle_mem_exception(vaddr_L, e); RETIRE_FAIL}
                 }
@@ -438,7 +432,7 @@ function clause execute (STORE(imm, rs2, rs1, width, aq, rl)) = {
             match translateAddr(vaddr_H, Write(Data)) {
               TR_Failure(e, _) => { handle_mem_exception(vaddr_H, e); RETIRE_FAIL },
               TR_Address(paddr, _) =>{
-                match pmpCheck(paddr,8,Write(Data),effectivePrivilege(Write(Data), mstatus, cur_privilege)) {
+                match pmpCheck(paddr,4,Write(Data),effectivePrivilege(Write(Data), mstatus, cur_privilege)) {
                   None()  => {handle_mem_exception(vaddr_H, E_SAMO_Addr_Align()); RETIRE_FAIL},
                   Some(e) => {handle_mem_exception(vaddr_H, e); RETIRE_FAIL}
                 }
