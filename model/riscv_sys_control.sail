@@ -55,13 +55,13 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0xB80 => p == Machine & (sizeof(xlen) == 32), // mcycleh
     0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
 
-    /* disabled trigger/debug module */
-    0x7a0 => p == Machine,
-    0x7a1 => p == Machine,
-    0x7a2 => p == Machine,
-    0x7a3 => p == Machine,
-    0x7a4 => p == Machine,
-    0x7a5 => p == Machine,
+    /* enable trigger/debug module */
+    0x7a0 => haveSdtrig() & (p == Machine),
+    0x7a1 => haveSdtrig() & (p == Machine),
+    0x7a2 => haveSdtrig() & (p == Machine),
+    0x7a3 => haveSdtrig() & (p == Machine),
+    0x7a4 => haveSdtrig() & (p == Machine),
+    0x7a5 => haveSdtrig() & (p == Machine),
 
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
@@ -506,7 +506,6 @@ function init_sys() -> unit = {
   mstatus = set_mstatus_SXL(mstatus, misa[MXL]);
   mstatus = set_mstatus_UXL(mstatus, misa[MXL]);
   mstatus[SD]   = 0b0;
-  mstatus[MPP] = privLevel_to_bits(lowest_supported_privLevel());
 
   /* set to little-endian mode */
   if sizeof(xlen) == 64 then {
