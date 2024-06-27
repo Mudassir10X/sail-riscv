@@ -998,7 +998,7 @@ register tcontrol : TControl
 register tinfo    : TInfo
 
 function isValidTselect(tselect_val : xlenbits) -> bool = {
-  let N_triggers = 3;// Number of triggers supported
+  let N_triggers = 1;// Number of triggers supported
   (unsigned(tselect_val) >= 0) & (unsigned(tselect_val) < N_triggers);
 }
 
