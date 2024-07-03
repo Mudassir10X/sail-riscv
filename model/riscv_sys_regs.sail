@@ -1015,8 +1015,9 @@ function legalize_tdata1(o : TData1, v : xlenbits) -> TData1 = {
   let o = [o with Data = if sys_enable_sdtrig() then (if v[TYPE] != 0x0 then v[Data] else o[Data]) else o[Data]];
   [o with Dmode = 0b0]
 }
-function legalize_tinfo(o : TInfo) -> xlenbits = {
-  if sys_enable_sdtrig() then zero_extend(0x1000001) else return zero_extend(0b0)
+function legalize_tinfo(o : TInfo, tselect_val : xlenbits) -> xlenbits = {
+  let N_triggers = 1;
+  if sys_enable_sdtrig() & (unsigned(tselect_val) < N_triggers) then zero_extend(0x0100807c) else return zero_extend(0x1000001)
 }
 
 function legalize_tcontrol(o : TControl, v : xlenbits) -> TControl = {
