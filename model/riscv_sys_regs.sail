@@ -760,7 +760,12 @@ bitfield TData1 : xlenbits = {
   // Debug Mode bit.
   Dmode  : xlen - 5,
   // Trigger-specific data bits.
-  Data   : xlen - 6 .. 0,
+  // Data   : xlen - 6 .. 0,
+  Data   : {
+    when TYPE == 0x2 => {
+      data1 : xlen - 6 .. 0
+    }
+  }
 }
 
 
@@ -927,7 +932,7 @@ bitfield ETrigger : xlenbits = {
   // Trigger in VS-mode.
   VS     : 12,
   // Trigger in VU-mode.
-  VU     : 11,
+  VU     : 11,TData1
   // Reserved WPRI bits.
   wpri_1 : 10,
   // Trigger in M-mode.
@@ -951,7 +956,7 @@ bitfield TMexttrigger : xlenbits = {
   Hit    : xlen - 6,
   // Reserved WPRI bits.
   wpri   : xlen - 7 .. 23,
-  // Interrupt control signal bit.
+  // Interrupt controTData1l signal bit.
   Intctl : 22,
   // Determines the contents of the XLEN-bit compare values.
   Select : 21 .. 6,
@@ -1022,7 +1027,7 @@ function legalize_tinfo(o : TInfo, tselect_val : xlenbits) -> xlenbits = {
 
 function legalize_tcontrol(o : TControl, v : xlenbits) -> TControl = {
   let v = Mk_TControl(v);
-  let o = [o with MPTE = if sys_enable_sdtrig() then o[MTE] else o[MPTE]];
+  let o = [o with MPTE = if sys_enable_sdtrig() then v[MPTE] else o[MPTE]];
   let o = [o with MTE = if sys_enable_sdtrig() then v[MTE] else o[MTE]];
   o
 }
