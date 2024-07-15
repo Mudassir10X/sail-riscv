@@ -760,12 +760,7 @@ bitfield TData1 : xlenbits = {
   // Debug Mode bit.
   Dmode  : xlen - 5,
   // Trigger-specific data bits.
-  // Data   : xlen - 6 .. 0,
-  Data   : {
-    when TYPE == 0x2 => {
-      data1 : xlen - 6 .. 0
-    }
-  }
+  Data   : xlen - 6 .. 0,
 }
 
 

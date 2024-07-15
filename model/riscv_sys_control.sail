@@ -56,12 +56,12 @@ function is_CSR_defined (csr : csreg, p : Privilege) -> bool =
     0xB82 => p == Machine & (sizeof(xlen) == 32), // minstreth
 
     /* enable trigger/debug module */
-    0x7a0 => haveSdtrig() & (p == Machine),
-    0x7a1 => haveSdtrig() & (p == Machine),
-    0x7a2 => haveSdtrig() & (p == Machine),
-    0x7a3 => haveSdtrig() & (p == Machine),
-    0x7a4 => haveSdtrig() & (p == Machine),
-    0x7a5 => haveSdtrig() & (p == Machine),
+    0x7a0 => haveSdtrig() & (p == Machine), // tselet
+    0x7a1 => haveSdtrig() & (p == Machine), // tdata1
+    0x7a2 => haveSdtrig() & (p == Machine), // tdata2
+    0x7a3 => haveSdtrig() & (p == Machine), // tdata3
+    0x7a4 => haveSdtrig() & (p == Machine), // tinfo
+    0x7a5 => haveSdtrig() & (p == Machine), // tcontrol
 
     /* supervisor mode: trap setup */
     0x100 => haveSupMode() & (p == Machine | p == Supervisor), // sstatus
